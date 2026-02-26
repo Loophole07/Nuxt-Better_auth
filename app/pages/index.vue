@@ -1,6 +1,28 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-    <UContainer class="max-w-lg w-full px-4">
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <UContainer class="max-w-lg w-full px-4 py-10">
+
+      <!-- Navbar -->
+      <div class="flex items-center justify-between mb-12">
+        <div class="flex items-center gap-2">
+          <UIcon name="i-simple-icons-github" class="w-6 h-6 text-white" />
+          <span class="text-white font-semibold text-sm">GitHub Finder</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <NuxtLink to="/compare" class="text-xs text-gray-400 hover:text-white transition">
+            Compare
+          </NuxtLink>
+          <NuxtLink to="/change-password" class="text-xs text-gray-400 hover:text-white transition">
+            Settings
+          </NuxtLink>
+          <button
+            class="text-xs bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white px-3 py-1.5 rounded-full border border-white/10 transition"
+            @click="handleSignOut"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
 
       <!-- Header -->
       <div class="text-center mb-10">
@@ -62,6 +84,30 @@
         </div>
       </div>
 
+      <!-- Quick Actions -->
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        <NuxtLink
+          to="/compare"
+          class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition flex items-center gap-3"
+        >
+          <UIcon name="i-heroicons-scale" class="w-5 h-5 text-blue-400" />
+          <div>
+            <p class="text-white text-sm font-semibold">Compare Users</p>
+            <p class="text-gray-500 text-xs">Side by side stats</p>
+          </div>
+        </NuxtLink>
+        <NuxtLink
+          to="/change-password"
+          class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition flex items-center gap-3"
+        >
+          <UIcon name="i-heroicons-key" class="w-5 h-5 text-purple-400" />
+          <div>
+            <p class="text-white text-sm font-semibold">Change Password</p>
+            <p class="text-gray-500 text-xs">Update your credentials</p>
+          </div>
+        </NuxtLink>
+      </div>
+
       <!-- Footer -->
       <p class="text-center text-xs text-gray-600 mt-8">
         Powered by GitHub Public API
@@ -72,10 +118,17 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '../../layers/auth/composables/useAuth'
+
+definePageMeta({
+  middleware: 'auth'
+})
+
 const username = ref('')
 const error = ref(false)
 const loading = ref(false)
 const { getUser } = useGitHub()
+const { signOut } = useAuth()
 const router = useRouter()
 
 const suggestions = ['torvalds', 'gaearon', 'yyx990803', 'sindresorhus']
@@ -97,5 +150,10 @@ const search = async () => {
 const quickSearch = (name: string) => {
   username.value = name
   search()
+}
+
+const handleSignOut = async () => {
+  await signOut()
+  router.push('/login')
 }
 </script>

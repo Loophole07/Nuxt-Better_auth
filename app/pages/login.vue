@@ -52,12 +52,29 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '../../layers/auth/composables/useAuth'
+
 const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const { signIn } = useAuth()
+const router = useRouter()
 
 const handleSignIn = async () => {
-  // logic here
+  if (!email.value || !password.value) {
+    error.value = 'Please fill in all fields'
+    return
+  }
+  error.value = ''
+  loading.value = true
+  try {
+    await signIn(email.value, password.value)
+    router.push('/')
+  } catch (e: any) {
+    error.value = e?.data?.message || 'Invalid email or password'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
