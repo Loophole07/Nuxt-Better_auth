@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-    <UContainer class="max-w-lg w-full px-4 py-10">
+    <div class="max-w-2xl mx-auto px-4 py-10">
 
       <!-- Navbar -->
       <div class="flex items-center justify-between mb-12">
@@ -9,8 +9,22 @@
           <span class="text-white font-semibold text-sm">GitHub Finder</span>
         </div>
         <div class="flex items-center gap-4">
+
+          <!-- User greeting -->
+          <div v-if="user" class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+              <span class="text-white text-xs font-bold">
+                {{ user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() }}
+              </span>
+            </div>
+            <span class="text-gray-300 text-xs">{{ user.name || user.email }}</span>
+          </div>
+
           <NuxtLink to="/compare" class="text-xs text-gray-400 hover:text-white transition">
             Compare
+          </NuxtLink>
+          <NuxtLink to="/bookmarks" class="text-xs text-gray-400 hover:text-white transition">
+            Bookmarks
           </NuxtLink>
           <NuxtLink to="/change-password" class="text-xs text-gray-400 hover:text-white transition">
             Settings
@@ -85,7 +99,7 @@
       </div>
 
       <!-- Quick Actions -->
-      <div class="grid grid-cols-2 gap-3 mt-4">
+      <div class="grid grid-cols-3 gap-3 mt-4">
         <NuxtLink
           to="/compare"
           class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition flex items-center gap-3"
@@ -94,6 +108,16 @@
           <div>
             <p class="text-white text-sm font-semibold">Compare Users</p>
             <p class="text-gray-500 text-xs">Side by side stats</p>
+          </div>
+        </NuxtLink>
+        <NuxtLink
+          to="/bookmarks"
+          class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition flex items-center gap-3"
+        >
+          <UIcon name="i-heroicons-bookmark" class="w-5 h-5 text-yellow-400" />
+          <div>
+            <p class="text-white text-sm font-semibold">Bookmarks</p>
+            <p class="text-gray-500 text-xs">Saved profiles</p>
           </div>
         </NuxtLink>
         <NuxtLink
@@ -108,16 +132,32 @@
         </NuxtLink>
       </div>
 
+      <!-- Easter Egg -->
+      <Transition name="bounce">
+        <div
+          v-if="easterEgg"
+          class="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
+        >
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 text-center shadow-2xl">
+            <p class="text-5xl mb-4">🎉</p>
+            <p class="text-2xl font-bold text-white">You found it!</p>
+            <p class="text-gray-400 mt-2 text-sm">Konami Code activated</p>
+            <p class="text-gray-500 mt-1 text-xs">↑ ↑ ↓ ↓ ← → ← → B A</p>
+          </div>
+        </div>
+      </Transition>
+
       <!-- Footer -->
       <p class="text-center text-xs text-gray-600 mt-8">
         Powered by GitHub Public API
       </p>
 
-    </UContainer>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '../../layers/auth/composables/useAuth'
 
 definePageMeta({
@@ -128,8 +168,12 @@ const username = ref('')
 const error = ref(false)
 const loading = ref(false)
 const { getUser } = useGitHub()
-const { signOut } = useAuth()
+const { signOut, user, getSession } = useAuth()
 const router = useRouter()
+
+onMounted(async () => {
+  await getSession()
+})
 
 const suggestions = ['torvalds', 'gaearon', 'yyx990803', 'sindresorhus']
 
@@ -156,4 +200,42 @@ const handleSignOut = async () => {
   await signOut()
   router.push('/login')
 }
+
+// Konami Code Easter egg
+const konamiCode = [
+  'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+  'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
+  'b', 'a'
+]
+const konamiProgress = ref<string[]>([])
+const easterEgg = ref(false)
+
+const handleKeydown = (e: KeyboardEvent) => {
+  konamiProgress.value.push(e.key)
+  if (konamiProgress.value.length > konamiCode.length) {
+    konamiProgress.value.shift()
+  }
+  if (JSON.stringify(konamiProgress.value) === JSON.stringify(konamiCode)) {
+    easterEgg.value = true
+    setTimeout(() => easterEgg.value = false, 4000)
+    konamiProgress.value = []
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 </script>
+
+<style scoped>
+.bounce-enter-active {
+  animation: bounce-in 0.4s;
+}
+.bounce-leave-active {
+  animation: bounce-in 0.3s reverse;
+}
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+</style>
